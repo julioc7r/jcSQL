@@ -84,7 +84,8 @@ public class SQL {
                     j++;
                 }
             }
-            if(this.query.peek().equals("on")){ //SE ENTROU salva na fromList os atributos requiridos
+            
+            if(this.query.peek()!=null && this.query.peek().equals("on")){ //SE ENTROU salva na fromList os atributos requiridos
                 i++;
                 this.query.poll();
                 int j=0;
@@ -98,7 +99,7 @@ public class SQL {
                 }
             }
             
-            if(this.query.peek().equals("where")){  //SE ENTROU salva na whereList os atributos requiridos
+            if(this.query.peek()!=null && this.query.peek().equals("where")){  //SE ENTROU salva na whereList os atributos requiridos
                 this.whereFlag = true;
                 i++;
                 this.query.poll();
@@ -114,7 +115,7 @@ public class SQL {
                         return;}
                     }
             }              
-            if(this.query.peek().equals("order")){  //SE ENTROU define o elemento pelo qual a lista será ordenada
+            if(this.query.peek()!=null && this.query.peek().equals("order")){  //SE ENTROU define o elemento pelo qual a lista será ordenada
                 i+=2;
                 this.query.poll();// elimina o "ORDER" da fila
                 this.query.poll();// elimina o "BY" da fila
@@ -129,9 +130,11 @@ public class SQL {
         //Pensar em como fazer
         processamentoQuery();
         int whereTabelaPos = -1;
-
+        
+        
         //ENCONTRA AS TABELAS USADAS
         List<Tabela> tabelas = new LinkedList();
+        System.out.println("LAOSLKDOAKSDOAKS"+this.lista_tabelas.size());
         for(int i = 0; i<this.lista_tabelas.size();i++){
             int j = 0;
             //FAZ A COMPARAÇÃO ENCONTRANDO AS TABELAS ESCOLHIDAS NO FROM E ADICIONANDO NA LISTA TABELAS
@@ -140,6 +143,7 @@ public class SQL {
                 j++;
             }
         }
+        System.out.println("LAOSLKDOAKSDOAKS"+this.lista_tabelas.size());
         //FAZ A SELECTION(WHERE),ENCONTRA EM PRIMEIRA PARTE OS ATRIBUTOS QUE CORRESPONDE A CONDIÇÃO REQUIRIDA
         //Busca em qual tabela está o elemento
         for(int i = 0; i<tabelas.size();i++){
@@ -151,24 +155,48 @@ public class SQL {
 
         int n_elementos = 0; // número de colunas que a tabela resultado terá
         int[] pos_tabela = new int[this.fromList.size()]; // guarda a posição da tabela usada na lista_tabela 
-        
+       
         int n_linhas = 0;
         int n_colunas_total = 0;
+        int m;
+        boolean encontrouTabela = false;
+        
+        int[] quantidadePorTabela = new int[this.fromList.size()];//Guarda a quantidade de colunas usadas por tabela
+        for(int i = 0 ; i < this.fromList.size();i++){
+            quantidadePorTabela[i] = 0;
+        }
         
         if(this.selectList.get(0).contains("*")){
             for(int i = 0; i< this.fromList.size();i++){
-                pos_tabela[i] = this.lista_tabelas.indexOf(this.fromList.get(i)); //FALTA IMPLEMENTAR CASO OCORRA O JOIN
+                for( m = 0; m < this.lista_tabelas.size(); m++ ){
+                    System.out.println(this.fromList.get(i)+" COMPARAÇÃO "+ this.lista_tabelas.get(m).getNomeTabela());
+                    //System.out.println(lista_tabelas.toString());
+                    if(this.fromList.get(i).equals(this.lista_tabelas.get(m).getNomeTabela())){
+                       
+                        pos_tabela[i] = m; 
+                        encontrouTabela = true;
+                    }
+                }
+                if( encontrouTabela == false && m == this.lista_tabelas.size()){
+                    System.out.println("TABELA NÃO ENCONTRADA");
+                    return;
+                }
+                System.out.println("JO"+this.fromList.get(i)+this.lista_tabelas.indexOf(this.fromList.get(i))+ pos_tabela[i]);
                 n_elementos += this.lista_tabelas.get(pos_tabela[i]).getColunas();
                 n_linhas += this.lista_tabelas.get(pos_tabela[i]).getLinhas();
                 n_colunas_total += this.lista_tabelas.get(pos_tabela[i]).getColunas();
+                quantidadePorTabela[i] =  this.lista_tabelas.get(pos_tabela[i]).getColunas(); 
             }
         }else{
             n_elementos = this.selectList.size(); // número de colunas que a tabela resultado terá
             for(int i = 0; i< this.fromList.size();i++){
                 for(int j = 0; j <this.lista_tabelas.size();j++){
                     if(this.lista_tabelas.get(j).nomeTabela.contentEquals(this.fromList.get(i))){
-                    pos_tabela[i] = i; //FALTA IMPLEMENTAR CASO OCORRA O JOIN
+                    pos_tabela[i] = j; //FALTA IMPLEMENTAR CASO OCORRA O JOIN
+                     System.out.println("entrei");
+                    quantidadePorTabela[i] += 1;
                     }
+                    System.out.println("JO"+this.fromList.get(i) + this.lista_tabelas.get(j).nomeTabela);
                 }
                 n_linhas += this.lista_tabelas.get(pos_tabela[i]).getLinhas();
                 n_colunas_total += this.lista_tabelas.get(pos_tabela[i]).getColunas(); // FAZER IGUAL o tam[] e  o pos tabela[] pra dar o JOINs
@@ -186,22 +214,39 @@ public class SQL {
         
         
         boolean joinONList = false;
-        
-        for (int i = 0; i < pos_tabela.length ; i++){
+        if(this.selectList.get(0).contains("*") && fromList.size() == 1){
             for(int j = 0; j < n_elementos ; j++){
-                tam[j] = this.lista_tabelas.get(pos_tabela[i]).getColunaPeloNome(this.selectList.get(j));
-                System.out.println(tam[j] + "QQQ "+ n_elementos);
-                        if(tam[j]==99){// PERCORREU A TABELA E NÃO ACHOU
-                            System.out.println(" ELEMENTO NÃO ENCONTRADO!!");
-                            return;
-                        }
-                if((whereFlag==true) && (this.selectList.get(j).contains(whereList.get(0)))){
-                    whereTabelaPos = j;
+                tam[j] = j;
+            }
+        }
+        else if(this.selectList.get(0).contains("*") && fromList.size() > 1){
+            int k = 0;
+            for(int i = 0; i < fromList.size();i++){
+                for(int j = 0; j < this.lista_tabelas.get(pos_tabela[i]).getColunas() ; j++){
+                    tam[k] = j;
+                    k++;
                 }
             }
         }
+        else{
+            for (int i = 0; i < pos_tabela.length ; i++){
+                for(int j = 0; j < n_elementos ; j++){
+                    tam[j] = this.lista_tabelas.get(pos_tabela[i]).getColunaPeloNome(this.selectList.get(j));
+                    System.out.println(tam[j] + "QQQ "+ n_elementos);
+                            if(tam[j]==99){// PERCORREU A TABELA E NÃO ACHOU
+                                System.out.println(" ELEMENTO NÃO ENCONTRADO!!");
+                                return;
+                            }
+                    if((whereFlag==true) && (this.selectList.get(j).contains(whereList.get(0)))){
+                        whereTabelaPos = j;
+                    }
+                }
+            }
+        }
+        
+        
         if(fromList.size()>1){ // FAZ O JOIN SE A FROMLIST POSSUIR MAIS DE DOIS ELEMENTOS(IMPLEMENTAMOS PARA FUNCIONAR COM 2 ELEMENTOS)         
-            tabelaResultado = nestedLoopJoin(tabelaResultado,pos_tabela);
+            tabelaResultado = nestedLoopJoin(tabelaResultado,pos_tabela,tam,quantidadePorTabela);
             if(whereFlag==true){
                 for(int k = 0; k < pos_tabela.length ; k++){
                     for(int i = 0 ; i < n_linhas;i++){
@@ -228,6 +273,7 @@ public class SQL {
                     }
                 }   
             }
+            tabelaResultado.add("fim");
         }
         
         else{ 
@@ -245,7 +291,6 @@ public class SQL {
                         }
                     }
                 }   
-                tabelaResultado.add("fim");
             }
             else{
                 for(int k = 0; k < pos_tabela.length ; k++){
@@ -255,12 +300,13 @@ public class SQL {
                             tam[j] += n_colunas_total; //Faz com que os elementos das colunas desejadas sejam achados.
                         }
                     }
-                }   
+                } 
             }
             
-            
+            tabelaResultado.add("fim");
         }
         
+        // select * from employees1000,livros-db
         // select first_name gender from employees1000, livros-db
         // select first_name gender from employees1000 where gender = F _ FUNCIONA
         // select first_name gender from employees1000 where first_name = Mary NAO FUNCIONA
@@ -306,6 +352,7 @@ public class SQL {
             }
         }
     }
+    
     private int[] maiorTabela(int[] pos_tabela){ //VERIFICA A MENOR TABELA E COLOCA NA POSIÇÃO CENTRAL DO LOOP
         
         if(this.lista_tabelas.get(pos_tabela[0]).getLinhas() > this.lista_tabelas.get(pos_tabela[1]).getLinhas()){
@@ -317,7 +364,8 @@ public class SQL {
         return pos_tabela;
         
     }
-    public List<String> nestedLoopJoin(List<String> tabelaResultado, int[] pos_tabela){
+    
+    public List<String> nestedLoopJoin(List<String> tabelaResultado, int[] pos_tabela,int[] select_pos,int[] coluna_select){
         //TRABALHO 2
         pos_tabela = maiorTabela(pos_tabela); // A MAIOR TABELA RODA DENTRO DO LOOP DA MENOR TABELA
        /* for each tuple t.r in r do begin
@@ -326,35 +374,180 @@ public class SQL {
                 if they do, add t.r • t.s to the result.
             end
         end
-
         r is called the outer relation and s the inner relation of the join.
         */
        
-        int[] tam = new int[2];
+        //select name from pessoa trabalho on cpf
+               
+        for(int i = 0; i< this.joinList.size() ; i++){
+       
+            System.out.println("JOIN ON" +this.joinList.get(i));
+        }
+       
+        int[] pos_join = new int[2]; // GUARDA A POSIÇÃ) DOS ELEMENTO CHAVE EM SUAS RESPECTIVAS TABELAS [0] = tabela1 ||||| [1] = tabela2
+        
+        // pos_tabela -> posição da tabela na lista tabela
         
         for (int i = 0; i < pos_tabela.length ; i++){
             for(int j = 0; j < 2 ; j++){
-                tam[j] = this.lista_tabelas.get(pos_tabela[i]).getColunaPeloNome(this.joinList.get(j));
-                System.out.println(tam[j] + "LOOPcompareID ");
-                        if(tam[j]==99){// PERCORREU A TABELA E NÃO ACHOU
+                
+                pos_join[j] = this.lista_tabelas.get(pos_tabela[i]).getColunaPeloNome(this.joinList.get(0));
+                
+                System.out.println(pos_join[j] + "LOOPcompareID TABELA - "+ i);
+                
+                        if(pos_join[j]==99){// PERCORREU A TABELA E NÃO ACHOU
                             System.out.println(" ELEMENTO NÃO ENCONTRADO!!");
                             return null;
                         }
             }
         }
         
-        for(int i = 0 ; i < this.lista_tabelas.get(pos_tabela[0]).getLinhas();i++){
-                for(int j = 0 ; j < this.lista_tabelas.get(pos_tabela[1]).getLinhas() ; j++){
-                    if(this.lista_tabelas.get(pos_tabela[0]).getElemento(tam[0])== this.lista_tabelas.get(pos_tabela[1]).getElemento(tam[1]))
-                    
-                        //tabelaResultado.add(this.lista_tabelas.get(pos_tabela[k]).getElemento(tam[j]));
-                    
-                    tam[0] += this.lista_tabelas.get(pos_tabela[0]).getColunas(); //Faz com que os elementos das colunas desejadas sejam achados.
-                    tam[1] += this.lista_tabelas.get(pos_tabela[1]).getColunas();
+        
+        //ADICIONANDO OS HEADERS
+        int p = 0;
+        for(int k = 0; k < select_pos.length; k++){
+            System.out.println(pos_join[p] + "DENTRO DO LOOP K - " + k + " COLUNA "+ select_pos[k]+" P - " +p + this.lista_tabelas.get(pos_tabela[p]).getElemento(select_pos[k]));
+                if(k == (coluna_select[p]-1)){
+                                
+                    p = 1;
                 }
+            tabelaResultado.add(this.lista_tabelas.get(pos_tabela[p]).getElemento(select_pos[k]));
+            select_pos[k] = select_pos[k] + this.lista_tabelas.get(pos_tabela[p]).getColunas();
+        }
+        
+        
+        pos_join[0] = pos_join[0] + this.lista_tabelas.get(pos_tabela[0]).getColunas();
+        pos_join[1] = pos_join[1] + this.lista_tabelas.get(pos_tabela[1]).getColunas();
+        int aux = pos_join[0];
+        int auxb = pos_join[1];
+        
+        
+        int[] auxSelect = select_pos;
+        
+        for (int i = 0; i < select_pos.length ; i++){
+           System.out.println(i + " DENTRO DO SELECT - "+ select_pos[i]);
+        }
+        
+        for(int i = 0 ; i < this.lista_tabelas.get(pos_tabela[0]).getLinhas();i++){
+            //System.out.println( " i " + i );
+            if(pos_join[0] > this.lista_tabelas.get(pos_tabela[0]).getTamanho()){
+                break;
+            }
+            if(i>=1){
+                pos_join[0] = aux +( i * this.lista_tabelas.get(pos_tabela[0]).getColunas());
+            }
+            //System.out.println( " POSIÇAO DO JOIN i " + pos_join[0] );
+            
+                for(int j = 0 ; j < this.lista_tabelas.get(pos_tabela[1]).getLinhas() ; j++){
+                    //System.out.println( " i " + i + " j " + j);
+                    // System.out.println( " POSIÇAO DO JOIN j " + pos_join[1] );
+                    if(this.lista_tabelas.get(pos_tabela[0]).getElemento(pos_join[0]).contentEquals(this.lista_tabelas.get(pos_tabela[1]).getElemento(pos_join[1]))){
+                        p = 0;
+                        
+                        for(int k = 0; k < select_pos.length; k++){
+                            System.out.println(pos_join[p] + "DENTRO DO LOOP K - " + k + " COLUNA "+ select_pos[k]+" P - " +p + this.lista_tabelas.get(pos_tabela[p]).getElemento(select_pos[k]));
+                            if(k == (coluna_select[p]-1)){
+                                
+                                p = 1;
+                                //System.out.println(pos_join[j] + "DENTRO DO LOOP K - " + k + " COLUNA "+ select_pos[k]+" P - " +p);
+                            }
+                            tabelaResultado.add(this.lista_tabelas.get(pos_tabela[p]).getElemento(select_pos[k]));
+                            if(p==1){
+                                select_pos[k] = select_pos[k] + this.lista_tabelas.get(pos_tabela[p]).getColunas();
+                            }
+                            
+                        }
+                    }
+                    else{
+                        for(int k = 0; k < select_pos.length; k++){
+                            select_pos[k] = select_pos[k] + this.lista_tabelas.get(pos_tabela[p]).getColunas();
+                        }
+                    }
+                    
+                    //Faz com que os elementos das colunas desejadas sejam achados.
+                    pos_join[1] = pos_join[1] + this.lista_tabelas.get(pos_tabela[1]).getColunas();
+                    if(pos_join[1] > this.lista_tabelas.get(pos_tabela[1]).getTamanho()){
+                        break;
+                    }
+                    
+                }
+            for(int k = 0; k < coluna_select[0]; k++){
+                select_pos[k] = select_pos[k] + this.lista_tabelas.get(pos_tabela[p]).getColunas();
+            }
+            for(int k = coluna_select[0]; k < select_pos.length; k++){
+                select_pos[k] = auxSelect[k];
+            }
+            pos_join[1] = auxb;
         }
         return tabelaResultado;
-    }/*
+        
+       /* select * from trabalho pessoa on cpf
+    
+    DUAS FORMAS DE LER 
+    
+    SELECT *
+    FROM tabela1, tabela2 
+    WHERE tabela1.id=tabela2.id
+    
+    SELECT *
+    FROM tabela1
+    JOIN tabela2
+    ON tabela1.Key = tabela2.Key
+    */ 
+        
+        /*
+        for(int i = 0 ; i =  this.lista_tabelas.get(pos_tabela[0]).getLinhas() ; i +=this.lista_tabelas.get(pos_tabela[0]).getColunas()){
+            
+                for(int j = 0 ; j < this.lista_tabelas.get(pos_tabela[1]).getLinhas() ; j++){
+                    
+                    if(this.lista_tabelas.get(pos_tabela[0]).getElemento(pos_join[0]).equals(this.lista_tabelas.get(pos_tabela[1]).getElemento(pos_join[1]))){
+                        for(int l = 0; l < 2 ;l++){
+                            for(int k  = 0; k < select_pos.length;k++){
+                                tabelaResultado.add(this.lista_tabelas.get(pos_tabela[l]).getElemento(select_pos[k]));
+                                select_pos[k] +=  this.lista_tabelas.get(l).getColunas();
+                            }
+                        }
+                    }
+                    // verificar qual corresponde na tabela 1 com a tabela 2
+                    /*  quando achar os headers que são iguais fazer um for comparativo
+                     * for(i==0; i <linhas da tabela 1; i++)
+                     *      for(j==0; j< linhas da teabela 2; j++){
+                     *       if (valor.posiçaocampochhave.tabela2 [i]  == valor.posiçaocampochhave.tabela2[j]){
+                     *             Guardar posiçoes do tabela 1 em vetor auxilar (vou chamar de vetTAB1)
+                     *              Guardar posiçoes do tabela 2 em vetor auxilar (vou chamar de vetTAB2)
+                     *  }
+                     * }
+                     *
+                     *  Agora a ideia é printar tudo que foi armazenado ta tabela 1, mas primeiro temos que checar os campos que foram passados no select{
+                     *        então if ( se for * imprimimos todas os campos de acordo com tabela 1 )
+                     *              senão(verificamos quais foram os escolhidos)
+                     * 
+                     *          Armeza em uma tabela resultado ou ja printa
+                     * }
+                     *           Printamos em sequencia os os campos da tabela 2 checando vetTAB2
+                     *                  então if ( se for * imprimimos todas os campos de acordo com tabela 1){
+                     *                         aquui no caso não precisamos imprimir o campo chave da tabela 2, impriminfo apenas o tabela 1
+                     * 
+                     *                   }
+                     * * 
+                     *                      senão(verificamos quais foram os escolhidos e printamos){
+                        
+                                            Armeza em uma tabela resultado ou ja printa
+                     *              }
+                     * 
+                     *
+                     * 
+                    *
+                        
+                    pos_join[0] += this.lista_tabelas.get(pos_tabela[0]).getColunas(); //Faz com que os elementos das colunas desejadas sejam achados.
+                    pos_join[1] += this.lista_tabelas.get(pos_tabela[1]).getColunas();
+                }
+                
+        }*/
+        //return tabelaResultado;
+    }
+    
+    /*
 
     public void selection(List<String> whereList,Tabela tabela){//PROCESSAMENTO DO WHERE
         //{=, <, ≤, >, ≥, ≠} OPERADORES PARA TABELAS ORDENADAS
@@ -376,13 +569,10 @@ public class SQL {
 
         
     }
-    
-    public void projection(){//PROCESSAMENTO DO SELECT
-        
-    }*/
+    */
 
     private boolean isCommand(String elemento){
-        if(elemento.equals("from")){
+        if(elemento == null){
             return true;
         }
         else if(elemento.equals("where")){
@@ -394,25 +584,13 @@ public class SQL {
         else if(elemento.equals("on")){
             return true;
         }
-        else if(elemento == null){
+        else if(elemento.equals("from")){
             return true;
         }
         else{return false;}
     }
     
-    /*
     
-    DUAS FORMAS DE LER 
-    
-    SELECT *
-    FROM tabela1, tabela2 
-    WHERE tabela1.id=tabela2.id
-    
-    SELECT *
-    FROM tabela1
-    JOIN tabela2
-    ON tabela1.Key = tabela2.Key
-    */
     
     private boolean executaWhere(String elemento){
         if(whereList.get(1).contains("=")){
