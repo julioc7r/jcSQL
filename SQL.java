@@ -481,7 +481,7 @@ public class SQL {
         }
         return tabelaResultado;
         
-       /* select * from trabalho pessoa on cpf
+       /* select * from trabalho pessoa on cpf TESTE 
     
     DUAS FORMAS DE LER 
     
@@ -493,58 +493,7 @@ public class SQL {
     FROM tabela1
     JOIN tabela2
     ON tabela1.Key = tabela2.Key
-    */ 
-        
-        /*
-        for(int i = 0 ; i =  this.lista_tabelas.get(pos_tabela[0]).getLinhas() ; i +=this.lista_tabelas.get(pos_tabela[0]).getColunas()){
-            
-                for(int j = 0 ; j < this.lista_tabelas.get(pos_tabela[1]).getLinhas() ; j++){
-                    
-                    if(this.lista_tabelas.get(pos_tabela[0]).getElemento(pos_join[0]).equals(this.lista_tabelas.get(pos_tabela[1]).getElemento(pos_join[1]))){
-                        for(int l = 0; l < 2 ;l++){
-                            for(int k  = 0; k < select_pos.length;k++){
-                                tabelaResultado.add(this.lista_tabelas.get(pos_tabela[l]).getElemento(select_pos[k]));
-                                select_pos[k] +=  this.lista_tabelas.get(l).getColunas();
-                            }
-                        }
-                    }
-                    // verificar qual corresponde na tabela 1 com a tabela 2
-                    /*  quando achar os headers que são iguais fazer um for comparativo
-                     * for(i==0; i <linhas da tabela 1; i++)
-                     *      for(j==0; j< linhas da teabela 2; j++){
-                     *       if (valor.posiçaocampochhave.tabela2 [i]  == valor.posiçaocampochhave.tabela2[j]){
-                     *             Guardar posiçoes do tabela 1 em vetor auxilar (vou chamar de vetTAB1)
-                     *              Guardar posiçoes do tabela 2 em vetor auxilar (vou chamar de vetTAB2)
-                     *  }
-                     * }
-                     *
-                     *  Agora a ideia é printar tudo que foi armazenado ta tabela 1, mas primeiro temos que checar os campos que foram passados no select{
-                     *        então if ( se for * imprimimos todas os campos de acordo com tabela 1 )
-                     *              senão(verificamos quais foram os escolhidos)
-                     * 
-                     *          Armeza em uma tabela resultado ou ja printa
-                     * }
-                     *           Printamos em sequencia os os campos da tabela 2 checando vetTAB2
-                     *                  então if ( se for * imprimimos todas os campos de acordo com tabela 1){
-                     *                         aquui no caso não precisamos imprimir o campo chave da tabela 2, impriminfo apenas o tabela 1
-                     * 
-                     *                   }
-                     * * 
-                     *                      senão(verificamos quais foram os escolhidos e printamos){
-                        
-                                            Armeza em uma tabela resultado ou ja printa
-                     *              }
-                     * 
-                     *
-                     * 
-                    *
-                        
-                    pos_join[0] += this.lista_tabelas.get(pos_tabela[0]).getColunas(); //Faz com que os elementos das colunas desejadas sejam achados.
-                    pos_join[1] += this.lista_tabelas.get(pos_tabela[1]).getColunas();
-                }
-                
-        }*/
-        //return tabelaResultado;
+    */
     }
     
     /*
