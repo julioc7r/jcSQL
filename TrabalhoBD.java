@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
@@ -37,11 +38,12 @@ public class TrabalhoBD {
     
         File arquivoCSV = new File(caminhoArquivo);
         File [] lista_arquivosCSV = arquivoCSV.listFiles();
-        
+        System.out.println("Digite o local onde está o arquivo?"+lista_arquivosCSV.length + Arrays.toString(arquivoCSV.listFiles()));
         if(arquivoCSV.exists()==false){
             System.out.println("Arquivo não encontrado/Verifique novamento o caminho");
             return;
         }    
+        int n_tabelas = 0;
         for(int t = 0; t < lista_arquivosCSV.length; t++){
             if(lista_arquivosCSV[t].getName().contains(".csv")){
                     BufferedReader br = new BufferedReader(new FileReader(lista_arquivosCSV[t]));
@@ -66,27 +68,33 @@ public class TrabalhoBD {
                         }
                         
                     String[] vect = line.split(fator_divisor); //Divide pela as colunas da tabela
-
+                    String primeiroHeader = vect[0];
+                    
                     System.out.println("nome:"+ lista_arquivosCSV[t].getName()+ " linhas:" + qtd_linhas + " colunas:" +vect.length);
                     Banco.lista_tabelas.add(new Tabela(lista_arquivosCSV[t].getName().replace(".csv", ""), qtd_linhas, vect.length));
                     
-                    Banco.setN_tabelas(t);
+                    Banco.setN_tabelas(n_tabelas);//atualiza o numero de tabelas no banco
                     
                     
-                    Banco.lista_tabelas.get(t).toString();
-                    System.out.println(Banco.lista_tabelas.get(t).toString());
+                    //Banco.lista_tabelas.get(t).toString();
+                    //System.out.println(Banco.lista_tabelas.get(t).toString());
 
                     while (line != null) {
                         System.out.println(line);
                         
                         vect = line.split(fator_divisor); //divide no vetor apartir da virgula
-
-                        Banco.lista_tabelas.get(t).adicionaElemento(vect);
+                        if(vect[0].equals(primeiroHeader)){
+                            for (int i = 0;i < vect.length;i++){
+                                vect[i].toLowerCase();//NAOFUNCINOANSdkm
+                            }
+                        }
+                        Banco.lista_tabelas.get(n_tabelas).adicionaElemento(vect);
                         line = br.readLine();
                     }
                     
                     System.out.println("Tabela:");
-                    Banco.lista_tabelas.get(t).printTabela();
+                    Banco.lista_tabelas.get(n_tabelas).printTabela();
+                    n_tabelas++;
                 
             }
         }
@@ -96,6 +104,10 @@ public class TrabalhoBD {
             String elemento;
             
             do{
+                System.out.println("TABELAS:");
+                for(int i = 0 ; i < Banco.getN_tabelas();i++){
+                    System.out.println("nome:"+ Banco.lista_tabelas.get(i).toString());
+                }
                 System.out.println("Bem-vindo!");
                 System.out.println("==========");
                 System.out.println("1 - Query");
